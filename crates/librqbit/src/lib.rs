@@ -100,7 +100,11 @@ pub use torrent_state::{
     ManagedTorrent, ManagedTorrentShared, ManagedTorrentState, TorrentMetadata, TorrentStats,
     TorrentStatsState,
 };
-pub use type_aliases::FileInfos;
+pub use type_aliases::{BF, BS, FileInfos};
+/// Lets an embedder keep torrents' have-bitfields in its own storage (`SessionOptions::bitv_factory`),
+/// so a restart can resume from a verified bitfield instead of re-reading every piece.
+pub use bitv::BitV;
+pub use bitv_factory::BitVFactory;
 
 pub use buffers::*;
 pub use clone_to_owned::CloneToOwned;

@@ -434,6 +434,12 @@ pub struct SessionOptions {
     /// all remembered torrents will continue where they left off.
     pub persistence: Option<SessionPersistenceConfig>,
 
+    /// Where torrents' have-bitfields are loaded from and stored, overriding the one `persistence`
+    /// and `fastresume` would choose. A bitfield it loads is spot-checked like fastresume data
+    /// (a piece per file and a small random sample) before it is trusted; when it returns none,
+    /// the torrent gets the full initial check.
+    pub bitv_factory: Option<Arc<dyn BitVFactory>>,
+
     /// The peer ID to use. If not specified, a random one will be generated.
     pub peer_id: Option<Id20>,
 
@@ -489,6 +495,7 @@ impl Default for SessionOptions {
             disable_trackers: false,
             fastresume: false,
             persistence: None,
+            bitv_factory: None,
             peer_id: None,
             listen: None,
             connect: None,
@@ -689,6 +696,7 @@ impl Session {
             let (persistence, bitv_factory) = persistence_factory(&opts, spawner.clone())
                 .await
                 .context("error initializing session persistence store")?;
+            let bitv_factory = opts.bitv_factory.clone().unwrap_or(bitv_factory);
 
             let proxy_url = opts.connect.as_ref().and_then(|s| s.proxy_url.as_ref());
             let proxy_config = match proxy_url {
