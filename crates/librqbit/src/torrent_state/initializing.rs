@@ -89,6 +89,12 @@ impl TorrentStateInitializing {
         have_pieces: Option<Box<dyn BitV>>,
     ) -> Option<Box<dyn BitV>> {
         let hp = have_pieces?;
+        let random_checks = self
+            .shared
+            .session
+            .upgrade()
+            .and_then(|s| s.fastresume_random_checks)
+            .unwrap_or(MAX_FASTRESUME_CHECKS);
         let actual = hp.as_bytes().len();
         let expected = self.metadata.lengths().piece_bitfield_bytes();
         if actual != expected {
@@ -133,9 +139,7 @@ impl TorrentStateInitializing {
                 }
 
                 // For all the remaining pieces we claim we have, validate them with decreasing probability.
-                let queue = queue
-                    .iter_ones()
-                    .sample(&mut rand::rng(), MAX_FASTRESUME_CHECKS);
+                let queue = queue.iter_ones().sample(&mut rand::rng(), random_checks);
 
                 for (tmp_id, piece_id) in queue.into_iter().enumerate() {
                     let denom: u32 = (tmp_id + 1).min(50).try_into().unwrap();

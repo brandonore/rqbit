@@ -109,6 +109,7 @@ pub struct Session {
     pub(crate) db: RwLock<SessionDatabase>,
     next_id: AtomicUsize,
     pub(crate) bitv_factory: Arc<dyn BitVFactory>,
+    pub(crate) fastresume_random_checks: Option<usize>,
     spawner: BlockingSpawner,
 
     // Network
@@ -440,6 +441,11 @@ pub struct SessionOptions {
     /// the torrent gets the full initial check.
     pub bitv_factory: Option<Arc<dyn BitVFactory>>,
 
+    /// How many pieces, beyond one per file, a fastresume spot check may sample at random before
+    /// it trusts a loaded bitfield. None keeps the default (up to 64 candidates, each checked
+    /// with decreasing probability); `Some(0)` checks one piece per file only.
+    pub fastresume_random_checks: Option<usize>,
+
     /// The peer ID to use. If not specified, a random one will be generated.
     pub peer_id: Option<Id20>,
 
@@ -496,6 +502,7 @@ impl Default for SessionOptions {
             fastresume: false,
             persistence: None,
             bitv_factory: None,
+            fastresume_random_checks: None,
             peer_id: None,
             listen: None,
             connect: None,
@@ -788,6 +795,7 @@ impl Session {
             let session = Arc::new(Self {
                 persistence,
                 bitv_factory,
+                fastresume_random_checks: opts.fastresume_random_checks,
                 peer_id,
                 dht,
                 peer_opts,
