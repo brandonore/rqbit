@@ -154,7 +154,9 @@ impl TorrentStateInitializing {
                     })
                     .enumerate()
                 {
-                    if fo.check_piece(piece_id).is_err() {
+                    // `check_piece` answers Ok(false) for a hash mismatch: that is broken too,
+                    // not only a read error.
+                    if !matches!(fo.check_piece(piece_id), Ok(true)) {
                         return true;
                     }
 
